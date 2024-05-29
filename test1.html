@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8' />
+    <title>Mapbox GL with SVG Arrows</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css' rel='stylesheet' />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id='map'></div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1Ijoib3VyZmFybXMiLCJhIjoiY2x3YWRhbW9nMGRsNjJxcHFwdW81emVhNSJ9.forvlRpP1nOZekrRDqBKjQ';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: { lng: -122.09114272737665, lat: 37.37633407305498 },
+            zoom: 19
+        });
+
+        function calculateEndPoint(startLat, startLng, direction, length) {
+            // Adjust the direction by 180 degrees to get the opposite direction
+            var adjustedDirection = (direction + 180) % 360;
+
+            // Convert direction from degrees to radians
+            var directionRad = adjustedDirection * Math.PI / 180;
+
+            // Earth radius in meters (assuming a spherical Earth)
+            var earthRadius = 6371000; // Approximate radius of the Earth
+
+            // Calculate ending point coordinates
+            var endLat = Math.asin(Math.sin(startLat * Math.PI / 180) * Math.cos(length / earthRadius) +
+                Math.cos(startLat * Math.PI / 180) * Math.sin(length / earthRadius) * Math.cos(directionRad));
+            var endLng = (startLng * Math.PI / 180) + Math.atan2(Math.sin(directionRad) * Math.sin(length / earthRadius) * Math.cos(startLat * Math.PI / 180),
+                Math.cos(length / earthRadius) - Math.sin(startLat * Math.PI / 180) * Math.sin(endLat));
+
+            // Convert back to degrees
+            endLat = endLat * 180 / Math.PI;
+            endLng = endLng * 180 / Math.PI;
+
+            // Return the end point coordinates
+            return {
+                latitude: endLat,
+                longitude: endLng
+            };
+        }
+
+
+
+
+        map.on('load', function () {
+
+
+            d3.csv("pathWind.1.csv").then(function (data) {
+
+                console.log('data', data);
+
+                const lines = []
+                for (var i = 0; i < data.length; i++) {
+
+                    if (i === data.length - 1) {
+                        break;
+                    }
+                    const startLat = +data[i].latitude;
+                    const startLng = +data[i].longitude;
+                    const endLat = +data[i + 1].latitude
+                    const endLng = +data[i + 1].longitude
+                    const bearing = turf.bearing(turf.point([startLng, startLat]), turf.point([endLng, endLat]));
+
+                    console.log('bearing', bearing);
+                    const angle = bearing + parseInt(data[i].direction)
+                    console.log('angle', angle);
+
+
+                    const endPoint = calculateEndPoint(startLat, startLng, angle, +data[i].speed * 10);
+                    //as geojson 
+                    lines.push({
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: [
+                                [endPoint.longitude, endPoint.latitude],
+                                [startLng, startLat]
+                            ]
+                        },
+                        properties: {
+                            speed: +data[i].speed,
+                            direction: angle
+                        }
+                    })
+                }
+
+                const pins = data.map(d => {
+                    return {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [d.longitude, d.latitude]
+                        },
+                        properties: {
+                            title: d.speed,
+                            description: d.direction
+                        }
+                    }
+                });
+                console.log('lines', lines);
+
+                map.getSource('points').setData({
+                    type: 'FeatureCollection',
+                    features: pins
+                });
+                map.getSource('lines').setData({
+                    type: 'FeatureCollection',
+                    features: lines
+                });
+
+
+                map.getSource('points').setData({
+                    type: 'FeatureCollection',
+                    features: pins
+                });
+                map.getSource('lines').setData({
+                    type: 'FeatureCollection',
+                    features: lines
+                });
+            });
+
+            map.loadImage('triangle.png', function (error, image) {
+                if (error) throw error;
+                map.addImage('arrow', image);
+            });
+
+            map.addSource('lines', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: []
+                }
+            });
+            map.addLayer({
+                id: 'lines',
+                type: 'line',
+                source: 'lines',
+                layout: {
+                    'line-cap': 'round',
+                    'line-join': 'round'
+                },
+                paint: {
+                    'line-color': 'red',
+                    'line-width': 2
+                }
+            });
+            map.addLayer({
+                id: 'points',
+                type: 'symbol',
+                source: 'lines',
+                layout: {
+                    'icon-image': 'arrow',
+                    'icon-rotate': ['get', 'direction'],
+                    'icon-size': 0.03,
+                    'icon-allow-overlap': true
+                }
+            });
+
+            map.addSource('points', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: []
+                }
+            });
+            map.addLayer({
+                id: 'circles',
+                type: 'circle',
+                source: 'points',
+                paint: {
+                    'circle-radius': 5,
+                    'circle-color': 'blue'
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>
