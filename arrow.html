@@ -69,7 +69,7 @@
         map.on('load', function () {
 
 
-            d3.csv("pathWind.1.csv").then(function (data) {
+            d3.csv("pathWind.1 (4).csv").then(function (data) {
                 console.log(data);
                 const lines = data.map(d => {
                     const endPoint = calculateEndPoint(+d.latitude, +d.longitude, +d.direction, +d.speed * 10);
