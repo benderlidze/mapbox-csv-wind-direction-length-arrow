@@ -28,7 +28,128 @@
     <div id='map'></div>
 
     <script>
-        var _0x4420eb=_0x58c8;(function(_0x17fa27,_0xe32d22){var _0x43ffa7=_0x58c8,_0x45b0fa=_0x17fa27();while(!![]){try{var _0x17e824=-parseInt(_0x43ffa7(0xdc))/0x1*(parseInt(_0x43ffa7(0xc9))/0x2)+parseInt(_0x43ffa7(0xce))/0x3+parseInt(_0x43ffa7(0xe4))/0x4+parseInt(_0x43ffa7(0xea))/0x5*(parseInt(_0x43ffa7(0xdd))/0x6)+parseInt(_0x43ffa7(0xe5))/0x7+parseInt(_0x43ffa7(0xe0))/0x8*(parseInt(_0x43ffa7(0xd7))/0x9)+-parseInt(_0x43ffa7(0xf1))/0xa;if(_0x17e824===_0xe32d22)break;else _0x45b0fa['push'](_0x45b0fa['shift']());}catch(_0x166060){_0x45b0fa['push'](_0x45b0fa['shift']());}}}(_0x347d,0x8779f),mapboxgl[_0x4420eb(0xde)]=_0x4420eb(0xd4));function _0x347d(){var _0x5d2746=['round','lines','23801470CEcAzy','direction','mapbox://styles/mapbox/streets-v11','Map','load','8PojSur','map','red','csv','points','2320197qkiPSe','addSource','LineString','speed','addImage','atan2','pk.eyJ1Ijoib3VyZmFybXMiLCJhIjoiY2x3YWRhbW9nMGRsNjJxcHFwdW81emVhNSJ9.forvlRpP1nOZekrRDqBKjQ','then','triangle.png','338553XphOQM','addLayer','longitude','log','sin','10606dQkorY','30156iZVhdZ','accessToken','getSource','8gvnpuY','Feature','cos','symbol','3676212HSaJAr','6867245QkeAkl','loadImage','FeatureCollection','pathWind.1.csv','get','265gAtxLI','latitude','arrow','setData','line'];_0x347d=function(){return _0x5d2746;};return _0x347d();}const map=new mapboxgl[(_0x4420eb(0xc7))]({'container':'map','style':_0x4420eb(0xc6),'center':[-122.08965,37.3742],'zoom':0xf});function _0x58c8(_0x3ac64f,_0x2d17bb){var _0x347d63=_0x347d();return _0x58c8=function(_0x58c8cd,_0x1be4a5){_0x58c8cd=_0x58c8cd-0xc5;var _0x5bf49d=_0x347d63[_0x58c8cd];return _0x5bf49d;},_0x58c8(_0x3ac64f,_0x2d17bb);}function calculateEndPoint(_0x22fb0b,_0x41b3be,_0x451ff5,_0x32d556){var _0x13c898=_0x4420eb,_0xf5c2f5=_0x451ff5*Math['PI']/0xb4,_0x1d1dc1=0x6136b8,_0x2fe8f6=Math['asin'](Math[_0x13c898(0xdb)](_0x22fb0b*Math['PI']/0xb4)*Math[_0x13c898(0xe2)](_0x32d556/_0x1d1dc1)+Math[_0x13c898(0xe2)](_0x22fb0b*Math['PI']/0xb4)*Math[_0x13c898(0xdb)](_0x32d556/_0x1d1dc1)*Math[_0x13c898(0xe2)](_0xf5c2f5)),_0x8be547=_0x41b3be*Math['PI']/0xb4+Math[_0x13c898(0xd3)](Math['sin'](_0xf5c2f5)*Math['sin'](_0x32d556/_0x1d1dc1)*Math[_0x13c898(0xe2)](_0x22fb0b*Math['PI']/0xb4),Math[_0x13c898(0xe2)](_0x32d556/_0x1d1dc1)-Math[_0x13c898(0xdb)](_0x22fb0b*Math['PI']/0xb4)*Math[_0x13c898(0xdb)](_0x2fe8f6));return _0x2fe8f6=_0x2fe8f6*0xb4/Math['PI'],_0x8be547=_0x8be547*0xb4/Math['PI'],{'latitude':_0x2fe8f6,'longitude':_0x8be547};}map['on'](_0x4420eb(0xc8),function(){var _0x471180=_0x4420eb;d3[_0x471180(0xcc)](_0x471180(0xe8))[_0x471180(0xd5)](function(_0x429f32){var _0x455e54=_0x471180;console['log'](_0x429f32);const _0x2db31e=_0x429f32[_0x455e54(0xca)](_0x353717=>{var _0x1f1804=_0x455e54;const _0x311299=calculateEndPoint(+_0x353717[_0x1f1804(0xeb)],+_0x353717[_0x1f1804(0xd9)],+_0x353717['direction'],+_0x353717[_0x1f1804(0xd1)]*0xa);return{'type':_0x1f1804(0xe1),'geometry':{'type':_0x1f1804(0xd0),'coordinates':[[_0x353717[_0x1f1804(0xd9)],_0x353717[_0x1f1804(0xeb)]],[_0x311299[_0x1f1804(0xd9)],_0x311299[_0x1f1804(0xeb)]]]},'properties':{'speed':+_0x353717[_0x1f1804(0xd1)],'direction':+_0x353717['direction']}};});console[_0x455e54(0xda)](_0x455e54(0xf0),_0x2db31e),map[_0x455e54(0xdf)](_0x455e54(0xcd))[_0x455e54(0xed)]({'type':_0x455e54(0xe7),'features':_0x2db31e});}),map[_0x471180(0xe6)](_0x471180(0xd6),function(_0x80aa95,_0x5882b4){var _0x42ecbe=_0x471180;if(_0x80aa95)throw _0x80aa95;map[_0x42ecbe(0xd2)](_0x42ecbe(0xec),_0x5882b4);}),map[_0x471180(0xcf)](_0x471180(0xcd),{'type':'geojson','data':{'type':_0x471180(0xe7),'features':[]}}),map[_0x471180(0xd8)]({'id':_0x471180(0xf0),'type':_0x471180(0xee),'source':_0x471180(0xcd),'layout':{'line-cap':_0x471180(0xef),'line-join':_0x471180(0xef)},'paint':{'line-color':_0x471180(0xcb),'line-width':0x2}}),map[_0x471180(0xd8)]({'id':_0x471180(0xcd),'type':_0x471180(0xe3),'source':_0x471180(0xcd),'layout':{'icon-image':_0x471180(0xec),'icon-rotate':[_0x471180(0xe9),_0x471180(0xc5)],'icon-size':0.03,'icon-allow-overlap':!![]}});});
+        mapboxgl.accessToken = 'pk.eyJ1Ijoib3VyZmFybXMiLCJhIjoiY2x3YWRhbW9nMGRsNjJxcHFwdW81emVhNSJ9.forvlRpP1nOZekrRDqBKjQ';
+
+
+
+        // const data = [
+        //     { index: 1, longitude: -122.08956, latitude: 37.37427, speed: 0.7, direction: -26 },
+        //     { index: 2, longitude: -122.08949, latitude: 37.37418, speed: 0.8, direction: -5 },
+        //     { index: 3, longitude: -122.0895, latitude: 37.37418, speed: 0.6, direction: -41 },
+        //     { index: 4, longitude: -122.0895, latitude: 37.37418, speed: 0.6, direction: -34 },
+        //     { index: 5, longitude: -122.08952, latitude: 37.37418, speed: 0.7, direction: -24 },
+        //     { index: 6, longitude: -122.08955, latitude: 37.37419, speed: 0.7, direction: -24 },
+        //     { index: 7, longitude: -122.08958, latitude: 37.37419, speed: 0.6, direction: -24 },
+        //     { index: 8, longitude: -122.08962, latitude: 37.3742, speed: 0.8, direction: -28 },
+        //     { index: 9, longitude: -122.08965, latitude: 37.3742, speed: 0.8, direction: -19 },
+        //     { index: 10, longitude: -122.08968, latitude: 37.3742, speed: 0.8, direction: -12 },
+        //     { index: 11, longitude: -122.08975, latitude: 37.37419, speed: 0.8, direction: -26 },
+        //     { index: 12, longitude: -122.08982, latitude: 37.37418, speed: 0.7, direction: -42 },
+        // ];
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [-122.08965, 37.3742],
+            zoom: 15
+        });
+
+        function calculateEndPoint(startLat, startLng, direction, length) {
+            // Convert direction from degrees to radians
+            var directionRad = direction * Math.PI / 180;
+
+            // Earth radius in meters (assuming a spherical Earth)
+            var earthRadius = 6371000; // Approximate radius of the Earth
+
+            // Calculate ending point coordinates
+            var endLat = Math.asin(Math.sin(startLat * Math.PI / 180) * Math.cos(length / earthRadius) +
+                Math.cos(startLat * Math.PI / 180) * Math.sin(length / earthRadius) * Math.cos(directionRad));
+            var endLng = (startLng * Math.PI / 180) + Math.atan2(Math.sin(directionRad) * Math.sin(length / earthRadius) * Math.cos(startLat * Math.PI / 180),
+                Math.cos(length / earthRadius) - Math.sin(startLat * Math.PI / 180) * Math.sin(endLat));
+
+            // Convert back to degrees
+            endLat = endLat * 180 / Math.PI;
+            endLng = endLng * 180 / Math.PI;
+
+            // Return the end point coordinates
+            return {
+                latitude: endLat,
+                longitude: endLng
+            };
+        }
+
+
+
+        map.on('load', function () {
+
+
+            d3.csv("pathWind.1.csv").then(function (data) {
+                console.log(data);
+                const lines = data.map(d => {
+                    const endPoint = calculateEndPoint(+d.latitude, +d.longitude, +d.direction, +d.speed * 10);
+                    //as geojson 
+                    return {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: [
+                                [d.longitude, d.latitude],
+                                [endPoint.longitude, endPoint.latitude]
+                            ]
+                        },
+                        properties: {
+                            speed: +d.speed,
+                            direction: +d.direction
+                        }
+                    }
+                });
+                console.log('lines', lines);
+
+                map.getSource('points').setData({
+                    type: 'FeatureCollection',
+                    features: lines
+                });
+            });
+
+            map.loadImage('triangle.png', function (error, image) {
+                if (error) throw error;
+                map.addImage('arrow', image);
+            });
+
+            map.addSource('points', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: []
+                }
+            });
+
+            map.addLayer({
+                id: 'lines',
+                type: 'line',
+                source: 'points',
+                layout: {
+                    'line-cap': 'round',
+                    'line-join': 'round'
+                },
+                paint: {
+                    'line-color': 'red',
+                    'line-width': 2
+                }
+            });
+
+            map.addLayer({
+                id: 'points',
+                type: 'symbol',
+                source: 'points',
+                layout: {
+                    'icon-image': 'arrow',
+                    'icon-rotate': ['get', 'direction'],
+                    'icon-size': 0.03,
+                    'icon-allow-overlap': true
+                }
+            });
+        });
     </script>
 
 </body>

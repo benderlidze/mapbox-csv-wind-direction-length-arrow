@@ -30,33 +30,19 @@
     <script>
         mapboxgl.accessToken = 'pk.eyJ1Ijoib3VyZmFybXMiLCJhIjoiY2x3YWRhbW9nMGRsNjJxcHFwdW81emVhNSJ9.forvlRpP1nOZekrRDqBKjQ';
 
-
-
-        // const data = [
-        //     { index: 1, longitude: -122.08956, latitude: 37.37427, speed: 0.7, direction: -26 },
-        //     { index: 2, longitude: -122.08949, latitude: 37.37418, speed: 0.8, direction: -5 },
-        //     { index: 3, longitude: -122.0895, latitude: 37.37418, speed: 0.6, direction: -41 },
-        //     { index: 4, longitude: -122.0895, latitude: 37.37418, speed: 0.6, direction: -34 },
-        //     { index: 5, longitude: -122.08952, latitude: 37.37418, speed: 0.7, direction: -24 },
-        //     { index: 6, longitude: -122.08955, latitude: 37.37419, speed: 0.7, direction: -24 },
-        //     { index: 7, longitude: -122.08958, latitude: 37.37419, speed: 0.6, direction: -24 },
-        //     { index: 8, longitude: -122.08962, latitude: 37.3742, speed: 0.8, direction: -28 },
-        //     { index: 9, longitude: -122.08965, latitude: 37.3742, speed: 0.8, direction: -19 },
-        //     { index: 10, longitude: -122.08968, latitude: 37.3742, speed: 0.8, direction: -12 },
-        //     { index: 11, longitude: -122.08975, latitude: 37.37419, speed: 0.8, direction: -26 },
-        //     { index: 12, longitude: -122.08982, latitude: 37.37418, speed: 0.7, direction: -42 },
-        // ];
-
         const map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v11',
-            center: [-122.08965, 37.3742],
-            zoom: 15
+            center: { lng: -122.09114272737665, lat: 37.37633407305498 },
+            zoom: 19
         });
 
         function calculateEndPoint(startLat, startLng, direction, length) {
+            // Adjust the direction by 180 degrees to get the opposite direction
+            var adjustedDirection = (direction + 180) % 360;
+
             // Convert direction from degrees to radians
-            var directionRad = direction * Math.PI / 180;
+            var directionRad = adjustedDirection * Math.PI / 180;
 
             // Earth radius in meters (assuming a spherical Earth)
             var earthRadius = 6371000; // Approximate radius of the Earth
@@ -93,8 +79,8 @@
                         geometry: {
                             type: 'LineString',
                             coordinates: [
-                                [d.longitude, d.latitude],
-                                [endPoint.longitude, endPoint.latitude]
+                                [endPoint.longitude, endPoint.latitude],
+                                [d.longitude, d.latitude]
                             ]
                         },
                         properties: {
@@ -103,9 +89,27 @@
                         }
                     }
                 });
+
+                const pins = data.map(d => {
+                    return {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [d.longitude, d.latitude]
+                        },
+                        properties: {
+                            title: d.speed,
+                            description: d.direction
+                        }
+                    }
+                });
                 console.log('lines', lines);
 
                 map.getSource('points').setData({
+                    type: 'FeatureCollection',
+                    features: pins
+                });
+                map.getSource('lines').setData({
                     type: 'FeatureCollection',
                     features: lines
                 });
@@ -116,18 +120,17 @@
                 map.addImage('arrow', image);
             });
 
-            map.addSource('points', {
+            map.addSource('lines', {
                 type: 'geojson',
                 data: {
                     type: 'FeatureCollection',
                     features: []
                 }
             });
-
             map.addLayer({
                 id: 'lines',
                 type: 'line',
-                source: 'points',
+                source: 'lines',
                 layout: {
                     'line-cap': 'round',
                     'line-join': 'round'
@@ -137,16 +140,32 @@
                     'line-width': 2
                 }
             });
-
             map.addLayer({
                 id: 'points',
                 type: 'symbol',
-                source: 'points',
+                source: 'lines',
                 layout: {
                     'icon-image': 'arrow',
                     'icon-rotate': ['get', 'direction'],
                     'icon-size': 0.03,
                     'icon-allow-overlap': true
+                }
+            });
+
+            map.addSource('points', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: []
+                }
+            });
+            map.addLayer({
+                id: 'circles',
+                type: 'circle',
+                source: 'points',
+                paint: {
+                    'circle-radius': 5,
+                    'circle-color': 'blue'
                 }
             });
         });
