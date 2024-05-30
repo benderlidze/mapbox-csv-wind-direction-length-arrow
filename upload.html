@@ -26,14 +26,20 @@
         #upload {
             position: absolute;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
+            gap: 5px;
             top: 10px;
             left: 10px;
             background-color: #f1f1f1;
             padding: 10px;
             border-radius: 5px;
             z-index: 1000
+        }
+
+        #speed-container {
+            display: none;
+            flex-direction: row;
+
         }
     </style>
 </head>
@@ -42,10 +48,17 @@
 
     <div id='upload'>
         <input type="file" id="file" name="file" accept=".csv" onchange="uploadData(this.files[0])">
+        <div id="speed-container">
+            <div for="maxspeed">&#10230;</div>
+            <div id="maxspeed"></div>
+        </div>
     </div>
     <div id='map'></div>
 
     <script>
+
+        const speedContainer = document.getElementById('speed-container');
+        const maxspeed = document.getElementById('maxspeed');
         mapboxgl.accessToken = 'pk.eyJ1Ijoib3VyZmFybXMiLCJhIjoiY2x3YWRhbW9nMGRsNjJxcHFwdW81emVhNSJ9.forvlRpP1nOZekrRDqBKjQ';
 
         const map = new mapboxgl.Map({
@@ -170,7 +183,10 @@
             const data = d3.csvParse(file)
             const bounds = new mapboxgl.LngLatBounds();
 
+            speedContainer.style.display = 'flex';
+            maxspeed.innerHTML = Math.max(...data.map((d) => +d.speed)) + ' m/s';
             const lines = []
+
             for (var i = 0; i < data.length; i++) {
 
                 if (i === data.length - 1) {
@@ -205,9 +221,9 @@
                     }
                 })
             }
-           
+
             const pins = data.map((d) => {
-                
+
                 return {
                     type: 'Feature',
                     geometry: {
