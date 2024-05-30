@@ -89,7 +89,7 @@
                     const bearing = turf.bearing(turf.point([startLng, startLat]), turf.point([endLng, endLat]));
 
                     console.log('bearing', bearing);
-                    const angle = bearing + parseInt(data[i].direction)
+                    const angle = bearing - parseInt(data[i].direction)
                     console.log('angle', angle);
 
 

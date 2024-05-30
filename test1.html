@@ -72,7 +72,7 @@
         map.on('load', function () {
 
 
-            d3.csv("pathWind.1.csv").then(function (data) {
+            d3.csv("pathWind.3.csv").then(function (data) {
 
                 console.log('data', data);
 
@@ -88,9 +88,11 @@
                     const endLng = +data[i + 1].longitude
                     const bearing = turf.bearing(turf.point([startLng, startLat]), turf.point([endLng, endLat]));
 
-                    console.log('bearing', bearing);
-                    const angle = bearing + parseInt(data[i].direction)
+                    const angle = 180 - parseInt(data[i].direction) + bearing
+
+                    console.log('bearing', data[i].index, "=", bearing, parseInt(data[i].direction));
                     console.log('angle', angle);
+                    console.log('-------------------',);
 
 
                     const endPoint = calculateEndPoint(startLat, startLng, angle, +data[i].speed * 10);
@@ -100,8 +102,8 @@
                         geometry: {
                             type: 'LineString',
                             coordinates: [
-                                [endPoint.longitude, endPoint.latitude],
-                                [startLng, startLat]
+                                [startLng, startLat],
+                                [endPoint.longitude, endPoint.latitude]
                             ]
                         },
                         properties: {
@@ -111,7 +113,7 @@
                     })
                 }
 
-                const pins = data.map(d => {
+                const pins = data.map((d) => {
                     return {
                         type: 'Feature',
                         geometry: {
@@ -120,7 +122,8 @@
                         },
                         properties: {
                             title: d.speed,
-                            description: d.direction
+                            description: d.direction,
+                            index: d.index
                         }
                     }
                 });
@@ -178,10 +181,11 @@
                 layout: {
                     'icon-image': 'arrow',
                     'icon-rotate': ['get', 'direction'],
-                    'icon-size': 0.015,
+                    'icon-size': 0.02,
                     'icon-allow-overlap': true
                 }
             });
+
 
             map.addSource('points', {
                 type: 'geojson',
@@ -190,13 +194,26 @@
                     features: []
                 }
             });
+            // map.addLayer({
+            //     id: 'circles',
+            //     type: 'circle',
+            //     source: 'points',
+            //     paint: {
+            //         'circle-radius': 5,
+            //         'circle-color': 'blue'
+            //     }
+            // });
+            //add text 
             map.addLayer({
-                id: 'circles',
-                type: 'circle',
+                id: 'text',
+                type: 'symbol',
                 source: 'points',
-                paint: {
-                    'circle-radius': 5,
-                    'circle-color': 'blue'
+                layout: {
+                    'text-field': ['get', 'index'],
+                    'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+                    'text-radial-offset': 0.5,
+                    'text-justify': 'auto',
+                    'text-size': 12
                 }
             });
         });
