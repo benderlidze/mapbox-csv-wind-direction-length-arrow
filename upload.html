@@ -51,8 +51,8 @@
         const map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v11',
-            center: { lng: -122.09114272737665, lat: 37.37633407305498 },
-            zoom: 19
+            center: { lng: -86.9176049047727, lat: 26.743180750870792 },
+            zoom: 2
         });
 
         function calculateEndPoint(startLat, startLng, direction, length) {
@@ -183,11 +183,6 @@
 
                 const angle = 180 - parseInt(data[i].direction) + bearing
 
-                console.log('bearing', data[i].index, "=", bearing, parseInt(data[i].direction));
-                console.log('angle', angle);
-                console.log('-------------------',);
-
-
                 const endPoint = calculateEndPoint(startLat, startLng, angle, +data[i].speed * 10);
                 //as geojson 
                 lines.push({
@@ -205,8 +200,9 @@
                     }
                 })
             }
-
+            const bounds = new mapboxgl.LngLatBounds();
             const pins = data.map((d) => {
+                bounds.extend([d.longitude, d.latitude]);
                 return {
                     type: 'Feature',
                     geometry: {
@@ -219,6 +215,10 @@
                         index: d.index
                     }
                 }
+            });
+
+            map.fitBounds(bounds, {
+                padding: 100
             });
 
             map.getSource('points').setData({
