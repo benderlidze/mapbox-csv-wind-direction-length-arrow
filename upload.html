@@ -168,6 +168,7 @@
         function buildArraows(file) {
 
             const data = d3.csvParse(file)
+            const bounds = new mapboxgl.LngLatBounds();
 
             const lines = []
             for (var i = 0; i < data.length; i++) {
@@ -184,6 +185,10 @@
                 const angle = 180 - parseInt(data[i].direction) + bearing
 
                 const endPoint = calculateEndPoint(startLat, startLng, angle, +data[i].speed * 10);
+
+                bounds.extend([startLng, startLat]);
+                bounds.extend([endPoint.longitude, endPoint.latitude]);
+
                 //as geojson 
                 lines.push({
                     type: 'Feature',
@@ -200,9 +205,9 @@
                     }
                 })
             }
-            const bounds = new mapboxgl.LngLatBounds();
+           
             const pins = data.map((d) => {
-                bounds.extend([d.longitude, d.latitude]);
+                
                 return {
                     type: 'Feature',
                     geometry: {
