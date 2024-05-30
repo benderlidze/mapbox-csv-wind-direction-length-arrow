@@ -59,7 +59,7 @@
 
         const speedContainer = document.getElementById('speed-container');
         const maxspeed = document.getElementById('maxspeed');
-        mapboxgl.accessToken = 'pk.eyJ1Ijoib3VyZmFybXMiLCJhIjoiY2x3YWRhbW9nMGRsNjJxcHFwdW81emVhNSJ9.forvlRpP1nOZekrRDqBKjQ';
+        mapboxgl.accessToken = 'pk.eyJ1IjoidGhlZmxvd25vZGVyIiwiYSI6ImNsZm4xYmljZjBjcGMzeW5wczZjamN4ZTMifQ.19gBzrpz8b1Hb3i7z8rHAA';
 
         const map = new mapboxgl.Map({
             container: 'map',
@@ -99,12 +99,12 @@
         map.on('load', function () {
 
 
-
             map.loadImage('triangle.png', function (error, image) {
                 if (error) throw error;
                 map.addImage('arrow', image);
             });
 
+            //source for lines
             map.addSource('lines', {
                 type: 'geojson',
                 data: {
@@ -112,6 +112,7 @@
                     features: []
                 }
             });
+            //add lines
             map.addLayer({
                 id: 'lines',
                 type: 'line',
@@ -125,6 +126,7 @@
                     'line-width': 4
                 }
             });
+            //add red arrows
             map.addLayer({
                 id: 'points',
                 type: 'symbol',
@@ -137,7 +139,6 @@
                 }
             });
 
-
             map.addSource('points', {
                 type: 'geojson',
                 data: {
@@ -145,16 +146,8 @@
                     features: []
                 }
             });
-            // map.addLayer({
-            //     id: 'circles',
-            //     type: 'circle',
-            //     source: 'points',
-            //     paint: {
-            //         'circle-radius': 5,
-            //         'circle-color': 'blue'
-            //     }
-            // });
-            //add text 
+
+            //add id numbers
             map.addLayer({
                 id: 'text',
                 type: 'symbol',
@@ -179,33 +172,46 @@
         }
 
         function buildArraows(file) {
+            // Parse CSV file data using d3.csvParse
+            const data = d3.csvParse(file);
 
-            const data = d3.csvParse(file)
+            // Create a new Mapbox bounds object to keep track of the bounds of the points
             const bounds = new mapboxgl.LngLatBounds();
 
+            // Show the speed container and display the maximum speed from the data
             speedContainer.style.display = 'flex';
             maxspeed.innerHTML = Math.max(...data.map((d) => +d.speed)) + ' m/s';
-            const lines = []
 
+            // Initialize an empty array to hold the lines
+            const lines = [];
+
+            // Loop through each data point in the CSV data
             for (var i = 0; i < data.length; i++) {
-
+                // Break the loop if it's the last data point
                 if (i === data.length - 1) {
                     break;
                 }
+
+                // Extract start and end latitude and longitude
                 const startLat = +data[i].latitude;
                 const startLng = +data[i].longitude;
-                const endLat = +data[i + 1].latitude
-                const endLng = +data[i + 1].longitude
+                const endLat = +data[i + 1].latitude;
+                const endLng = +data[i + 1].longitude;
+
+                // Calculate the bearing between the start and end points using Turf.js
                 const bearing = turf.bearing(turf.point([startLng, startLat]), turf.point([endLng, endLat]));
 
-                const angle = 180 - parseInt(data[i].direction) + bearing
+                // Calculate the angle for the direction of the arrow
+                const angle = 180 - parseInt(data[i].direction) + bearing;
 
+                // Calculate the end point of the arrow based on speed and angle
                 const endPoint = calculateEndPoint(startLat, startLng, angle, +data[i].speed * 10);
 
+                // Extend the bounds to include the start and end points
                 bounds.extend([startLng, startLat]);
                 bounds.extend([endPoint.longitude, endPoint.latitude]);
 
-                //as geojson 
+                // Add the line as a GeoJSON feature to the lines array
                 lines.push({
                     type: 'Feature',
                     geometry: {
@@ -219,11 +225,11 @@
                         speed: +data[i].speed,
                         direction: angle
                     }
-                })
+                });
             }
 
+            // Create an array of pin features for each data point
             const pins = data.map((d) => {
-
                 return {
                     type: 'Feature',
                     geometry: {
@@ -235,30 +241,28 @@
                         description: d.direction,
                         index: d.index
                     }
-                }
+                };
             });
 
+            // Fit the map to the bounds of the points
             map.fitBounds(bounds, {
                 padding: 100
             });
 
+            // Update the data source for the points on the map
             map.getSource('points').setData({
                 type: 'FeatureCollection',
                 features: pins
             });
+
+            // Update the data source for the lines on the map
             map.getSource('lines').setData({
                 type: 'FeatureCollection',
                 features: lines
             });
-            map.getSource('points').setData({
-                type: 'FeatureCollection',
-                features: pins
-            });
-            map.getSource('lines').setData({
-                type: 'FeatureCollection',
-                features: lines
-            });
+
         }
+
 
 
 
