@@ -287,6 +287,50 @@
 
             console.log('results', results);
 
+
+        }
+
+
+        const arrows = createSwitcher({
+            name: 'Show/hide arrows',
+            callback: (checked) => {
+                map.setLayoutProperty('points', 'visibility', checked ? 'visible' : 'none');
+            }
+        })
+        document.getElementById('upload').appendChild(arrows);
+
+
+
+        function createSwitcher({ name, callback }) {
+
+
+            const switcher = document.createElement('div');
+            switcher.style.display = 'flex';
+
+
+            const label = document.createElement('label');
+            label.innerHTML = name;
+            label.htmlFor = 'switcher';
+            label.style.cursor = 'pointer';
+            switcher.appendChild(label);
+
+            const checkbox = document.createElement('input');
+            checkbox.id = 'switcher';
+            checkbox.type = 'checkbox';
+            checkbox.style.marginRight = '5px';
+            checkbox.style.userSelect = 'none';
+            checkbox.checked = true;
+
+            switcher.prepend(checkbox);
+
+            switcher.onclick = () => {
+                if (typeof callback === 'function') {
+                    callback(checkbox.checked);
+                }
+            }
+
+            return switcher;
+
         }
 
 
