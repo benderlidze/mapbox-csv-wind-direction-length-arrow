@@ -59,6 +59,8 @@
         const arrowDelay = 10
         const speedContainer = document.getElementById('speed-container');
         const maxspeed = document.getElementById('maxspeed');
+        const uploadDiv = document.getElementById('upload');
+
         mapboxgl.accessToken = 'pk.eyJ1IjoidGhlZmxvd25vZGVyIiwiYSI6ImNsZm4xYmljZjBjcGMzeW5wczZjamN4ZTMifQ.19gBzrpz8b1Hb3i7z8rHAA';
 
         const map = new mapboxgl.Map({
@@ -119,7 +121,7 @@
                 id: 'line',
                 paint: {
                     'line-color': 'red',
-                    'line-width': 5,
+                    'line-width': 8,
                     // 'line-gradient' must be specified using an expression
                     // with the special 'line-progress' property
                     'line-gradient': [
@@ -208,11 +210,14 @@
             const max = Math.max(...minMax)
             console.log('min,max', min, max);
 
-
             // Define the color scale
             const colorScale = d3.scaleLinear()
-                .domain([min, max])
-                .range(["red", "green", "violet"]);
+                .domain([min, (min + max) / 2, max])  // Adjust the domain to match the number of colors
+                .range(["red", "orange", "green"]);  // More than two colors
+
+            buildLegend({
+                min, max, colorScale
+            })
 
             const pins = data.map((d) => [+d.longitude, +d.latitude]);
             const mLine = turf.lineString(pins);
@@ -311,7 +316,7 @@
                 map.setLayoutProperty('points', 'visibility', checked ? 'visible' : 'none');
             }
         })
-        document.getElementById('upload').appendChild(arrows);
+        uploadDiv.appendChild(arrows);
 
 
 
@@ -347,7 +352,48 @@
 
         }
 
+        function buildLegend({ min, max, colorScale }) {
 
+            const div = document.createElement("div")
+
+            const step = (max - min) / 10
+            for (let index = 0; index < 10; index++) {
+
+                const val = (min + step * index)
+
+                const container = document.createElement("div")
+                container.style.display = "flex"
+                container.style.flexDirection = "row"
+                container.style.gap = "5px"
+
+                const colorDiv = document.createElement("div")
+                colorDiv.style.display = "block"
+                colorDiv.style.width = "20px"
+                colorDiv.style.height = "20px"
+                colorDiv.style.backgroundColor = colorScale(val)
+                const valueDiv = document.createElement("div")
+                valueDiv.innerHTML = val.toFixed(2)
+
+
+                container.appendChild(colorDiv)
+                container.appendChild(valueDiv)
+
+                div.appendChild(container)
+            }
+
+            const bottomDiv = document.createElement("div")
+            bottomDiv.style.position = "absolute"
+            bottomDiv.style.bottom = "30px"
+            bottomDiv.style.left = "10px"
+            bottomDiv.style.zIndex = 10
+            bottomDiv.style.backgroundColor = "white"
+            bottomDiv.style.padding = "10px"
+
+
+
+            bottomDiv.appendChild(div)
+            document.body.appendChild(bottomDiv)
+        }
 
         function cosDegrees(degrees) {
             // Convert degrees to radians
