@@ -200,24 +200,46 @@
             maxspeed.innerHTML = Math.max(...data.map((d) => +d.speed)) + ' m/s';
 
 
+
+
             const minMax = data.map(d => {
                 const speed = +d.speed
                 const direction = +d.direction
-
                 return -1 * speed * cosDegrees(direction)
             })
-            const min = Math.min(...minMax)
-            const max = Math.max(...minMax)
+            const min = Math.ceil(Math.min(...minMax) * 100) / 100
+            const max = Math.ceil(Math.max(...minMax) * 100) / 100
             console.log('min,max', min, max);
+
+            //default values
+            let colorScheme = ["red", "orange", "green"]
+            let domain = [min, (min + max) / 2, max]
+
+            if (Math.abs(min) === max && max > 0) {
+                colorScheme = ["red", "blue", "green"]
+                domain = [min, (min + max) / 2, max]
+            }
+
+            if (Math.abs(min) === 2 * max && max > 0) {
+                colorScheme = ["red", "blue", "green"]
+                domain = [min, max / 3, max]
+            }
+
+            if (max < 0) {
+                colorScheme = ["red", "#8955b1"]
+                domain = [min, max]
+            }
 
             // Define the color scale
             const colorScale = d3.scaleLinear()
-                .domain([min, (min + max) / 2, max])  // Adjust the domain to match the number of colors
-                .range(["red", "orange", "green"]);  // More than two colors
+                .domain(domain)
+                .range(colorScheme);
 
             buildLegend({
                 min, max, colorScale
             })
+
+
 
             const pins = data.map((d) => [+d.longitude, +d.latitude]);
             const mLine = turf.lineString(pins);
@@ -357,7 +379,7 @@
             const div = document.createElement("div")
 
             const step = (max - min) / 10
-            for (let index = 0; index < 10; index++) {
+            for (let index = 0; index <= 10; index++) {
 
                 const val = (min + step * index)
 
