@@ -348,8 +348,6 @@
 
 
         function customColorScale({ min, max, value }) {
-
-
             const span = Math.max(Math.abs(min), Math.abs(max))
             //---calculate RGB colors----
             let red, green, blue;
@@ -369,7 +367,6 @@
                 green = 0
                 blue = 1
             }
-
             return `rgb(${red * 255},${green * 255},${blue * 255})`
         }
 
@@ -437,7 +434,7 @@
                 const color = colorScale(val)
                 colorDiv.style.backgroundColor = color
                 const valueDiv = document.createElement("div")
-                valueDiv.innerHTML = val.toFixed(0) + color
+                valueDiv.innerHTML = val.toFixed(0)
 
 
                 container.appendChild(colorDiv)
