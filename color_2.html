@@ -100,10 +100,22 @@
 
         map.on('load', function () {
 
-            map.loadImage('arrow-up.png', function (error, image) {
-                if (error) throw error;
-                map.addImage('arrow', image);
-            });
+
+            const base64Image = 'data:image/png;base64,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';
+            const img = new Image();
+            img.onload = function () {
+                map.addImage('arrow', img);
+            };
+            img.onerror = function (error) {
+                throw new Error('Image loading error: ' + error);
+            };
+            img.src = base64Image;
+
+
+            // map.loadImage('arrow-up.png', function (error, image) {
+            //     if (error) throw error;
+            //     map.addImage('arrow', image);
+            // });
 
             map.addSource('line', {
                 type: 'geojson',
@@ -197,7 +209,7 @@
 
             // Show the speed container and display the maximum speed from the data
             speedContainer.style.display = 'flex';
-            maxspeed.innerHTML = Math.max(...data.map((d) => +d.speed)) + ' m/s';
+            //maxspeed.innerHTML = Math.max(...data.map((d) => +d.speed)) + ' m/s';
 
 
 
@@ -434,7 +446,7 @@
                 const color = colorScale(val)
                 colorDiv.style.backgroundColor = color
                 const valueDiv = document.createElement("div")
-                valueDiv.innerHTML = val.toFixed(0)
+                valueDiv.innerHTML = val.toFixed(1)
 
 
                 container.appendChild(colorDiv)
