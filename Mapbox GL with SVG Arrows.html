@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8' />
+    <title>Mapbox GL with SVG Arrows</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css' rel='stylesheet' />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        #upload {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            top: 10px;
+            left: 10px;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000
+        }
+
+        #speed-container {
+            display: none;
+            flex-direction: row;
+
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id='upload'>
+        <input type="file" id="file" name="file" accept=".csv" onchange="uploadData(this.files[0])">
+        <div id="speed-container">
+            <div id="maxspeed"></div>
+        </div>
+    </div>
+    <div id='map'></div>
+
+    <script>
+        const arrowDelay = 10
+        const speedContainer = document.getElementById('speed-container');
+        const maxspeed = document.getElementById('maxspeed');
+        const uploadDiv = document.getElementById('upload');
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoidGhlZmxvd25vZGVyIiwiYSI6ImNsZm4xYmljZjBjcGMzeW5wczZjamN4ZTMifQ.19gBzrpz8b1Hb3i7z8rHAA';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: { lng: -86.9176049047727, lat: 26.743180750870792 },
+            zoom: 2
+        });
+
+        function calculateEndPoint(startLat, startLng, direction, length) {
+            // Adjust the direction by 180 degrees to get the opposite direction
+            var adjustedDirection = (direction + 180) % 360;
+
+            // Convert direction from degrees to radians
+            var directionRad = adjustedDirection * Math.PI / 180;
+
+            // Earth radius in meters (assuming a spherical Earth)
+            var earthRadius = 6371000; // Approximate radius of the Earth
+
+            // Calculate ending point coordinates
+            var endLat = Math.asin(Math.sin(startLat * Math.PI / 180) * Math.cos(length / earthRadius) +
+                Math.cos(startLat * Math.PI / 180) * Math.sin(length / earthRadius) * Math.cos(directionRad));
+            var endLng = (startLng * Math.PI / 180) + Math.atan2(Math.sin(directionRad) * Math.sin(length / earthRadius) * Math.cos(startLat * Math.PI / 180),
+                Math.cos(length / earthRadius) - Math.sin(startLat * Math.PI / 180) * Math.sin(endLat));
+
+            // Convert back to degrees
+            endLat = endLat * 180 / Math.PI;
+            endLng = endLng * 180 / Math.PI;
+
+            // Return the end point coordinates
+            return {
+                latitude: endLat,
+                longitude: endLng
+            };
+        }
+
+
+        map.on('load', function () {
+
+
+            const base64Image = 'data:image/png;base64,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';
+            const img = new Image();
+            img.onload = function () {
+                map.addImage('arrow', img);
+            };
+            img.onerror = function (error) {
+                throw new Error('Image loading error: ' + error);
+            };
+            img.src = base64Image;
+
+
+            // map.loadImage('arrow-up.png', function (error, image) {
+            //     if (error) throw error;
+            //     map.addImage('arrow', image);
+            // });
+
+            map.addSource('line', {
+                type: 'geojson',
+                lineMetrics: true,
+                data: {
+                    type: 'FeatureCollection',
+                    features: []
+                }
+            });
+
+            // the layer must be of type 'line'
+            map.addLayer({
+                type: 'line',
+                source: 'line',
+                id: 'line',
+                paint: {
+                    'line-color': 'red',
+                    'line-width': 8,
+                    // 'line-gradient' must be specified using an expression
+                    // with the special 'line-progress' property
+                    'line-gradient': [
+                        'interpolate',
+                        ['linear'],
+                        ['line-progress'],
+                        0,
+                        'blue',
+                        0.1,
+                        'royalblue',
+                        0.3,
+                        'cyan',
+                        0.5,
+                        'lime',
+                        0.7,
+                        'yellow',
+                        1,
+                        'red'
+                    ]
+                },
+                layout: {
+                    'line-cap': 'round',
+                    'line-join': 'round'
+                }
+            });
+
+
+            map.addSource('points', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: []
+                }
+            });
+
+            map.addLayer({
+                id: 'points',
+                type: 'symbol',
+                source: 'points',
+                layout: {
+                    'icon-image': 'arrow',
+                    'icon-rotate': ['get', 'bearing'],
+                    'icon-size': 0.12,
+                    'icon-allow-overlap': true
+                }
+            });
+
+
+
+            fetch('pathWind.1 (1).csv')
+                .then(response => response.text())
+                .then(data => buildLine(data));
+        });
+
+
+        function uploadData(file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const csvData = event.target.result;
+                buildLine(csvData);
+            };
+            reader.readAsText(file);
+        }
+
+
+        function buildLine(file) {
+
+            // Parse CSV file data using d3.csvParse
+            const data = d3.csvParse(file);
+
+            // Create a new Mapbox bounds object to keep track of the bounds of the points
+            const bounds = new mapboxgl.LngLatBounds();
+
+            // Show the speed container and display the maximum speed from the data
+            speedContainer.style.display = 'flex';
+            //maxspeed.innerHTML = Math.max(...data.map((d) => +d.speed)) + ' m/s';
+
+
+
+            // ----------------- Color scale[START] -----------------
+            const minMax = data.map(d => {
+                const speed = +d.speed
+                const direction = +d.direction
+                return -1 * speed * cosDegrees(direction)
+            })
+            const min = Math.ceil(Math.min(...minMax) * 100) / 100
+            const max = Math.ceil(Math.max(...minMax) * 100) / 100
+            console.log('min,max', min, max);
+
+            const span = Math.max(Math.abs(min), Math.abs(max))
+
+            //default values
+            let colorScheme = ["red", "orange", "green"]
+            let domain = [min, (min + max) / 2, max]
+
+            if (Math.abs(min) === max && max > 0) {
+                colorScheme = ["red", "blue", "green"]
+                domain = [min, (min + max) / 2, max]
+            }
+
+            if (Math.abs(min) === 2 * max && max > 0) {
+                colorScheme = ["red", "blue", "green"]
+                domain = [min, max / 3, max]
+            }
+
+            if (max < 0) {
+                colorScheme = ["red", "#8955b1"]
+                domain = [min, max]
+            }
+
+            // Define the color scale
+            const colorScale = d3.scaleLinear()
+                .domain(domain)
+                .range(colorScheme);
+
+            // ----------------- Color scale[/END] -----------------
+
+
+            const pins = data.map((d) => [+d.longitude, +d.latitude]);
+            const mLine = turf.lineString(pins);
+            const totalLength = turf.length(mLine, { units: 'meters' }) // Convert km to meters
+            const uniqueDistance = new Set()
+
+            // Function to calculate the distance in percentage from the start to each point
+            const calculateDistancesAndPercentages = (line, totalLength) => {
+                const results = [];
+                let cumulativeDistance = 0;
+                const lineGradient = []
+                for (let i = 0; i < line.geometry.coordinates.length; i++) {
+                    let bearing = 0;
+                    if (i > 0) {
+                        const start = turf.point(line.geometry.coordinates[i - 1]);
+                        const end = turf.point(line.geometry.coordinates[i]);
+                        const segmentLength = turf.distance(start, end, { units: 'meters' });
+                        cumulativeDistance += segmentLength;
+                        bearing = turf.bearing(end, start) - 180;
+                    }
+
+                    const speed = +data[i].speed;
+                    const direction = +data[i].direction;
+                    const paint = -1 * speed * cosDegrees(direction)
+
+                    const distancePercent = (cumulativeDistance / totalLength);
+                    results.push({
+                        index: i,
+                        coordinates: line.geometry.coordinates[i],
+                        totalDistanceMeters: cumulativeDistance,
+                        percentage: distancePercent,
+                        value: paint,
+                        bearing
+                    });
+
+                    bounds.extend(line.geometry.coordinates[i]);
+
+                    console.log('paint, span', paint, span);
+
+                    const cColor = customColorScale({ min, max, value: paint })
+
+                    if (!uniqueDistance.has(distancePercent)) {
+                        //lineGradient.push([distancePercent, colorScale(paint)]);
+                        lineGradient.push([distancePercent, cColor]);
+                    }
+                    uniqueDistance.add(distancePercent);
+                }
+
+                console.log('lineGradient', lineGradient);
+                console.log('lineGradient', uniqueDistance);
+
+                map.getSource('line').setData(mLine);
+                map.fitBounds(bounds, {
+                    padding: 100,
+                    animate: false,
+                });
+
+
+                map.setPaintProperty('line', 'line-gradient', [
+                    'interpolate',
+                    ['linear'],
+                    ['line-progress'],
+                    ...lineGradient.flat()
+                ])
+
+                const pointsData = {
+                    type: 'FeatureCollection',
+                    features: results
+                        .filter((_, index) => (index + 1) % arrowDelay === 0)
+                        .map((d) => {
+                            return {
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'Point',
+                                    coordinates: d.coordinates
+                                },
+                                properties: {
+                                    bearing: d.bearing
+                                }
+                            }
+                        })
+                }
+                console.log('pointsData', pointsData);
+                map.getSource('points').setData(pointsData);
+
+                return results;
+            };
+
+            const results = calculateDistancesAndPercentages(mLine, totalLength);
+
+            console.log('results', results);
+
+
+            const scale = customColorScale({
+                min, max
+            })
+
+            buildLegend({
+                min,
+                max,
+                colorScale: (value) => {
+                    return customColorScale({ min, max, value })
+                }
+            })
+        }
+
+
+
+        function customColorScale({ min, max, value }) {
+            const span = Math.max(Math.abs(min), Math.abs(max))
+            //---calculate RGB colors----
+            let red, green, blue;
+
+            if (value < 0) {
+                red = Math.abs(value) / span
+                green = 0
+                blue = 1 - Math.abs(value) / span
+            }
+            if (value > 0) {
+                red = 0
+                green = value / span
+                blue = 0
+            }
+            if (value === 0) {
+                red = 0
+                green = 0
+                blue = 1
+            }
+            return `rgb(${red * 255},${green * 255},${blue * 255})`
+        }
+
+
+        const arrows = createSwitcher({
+            name: 'Show/hide arrows',
+            callback: (checked) => {
+                map.setLayoutProperty('points', 'visibility', checked ? 'visible' : 'none');
+            }
+        })
+        uploadDiv.appendChild(arrows);
+
+
+
+        function createSwitcher({ name, callback }) {
+
+
+            const switcher = document.createElement('div');
+            switcher.style.display = 'flex';
+
+
+            const label = document.createElement('label');
+            label.innerHTML = name;
+            label.htmlFor = 'switcher';
+            label.style.cursor = 'pointer';
+            switcher.appendChild(label);
+
+            const checkbox = document.createElement('input');
+            checkbox.id = 'switcher';
+            checkbox.type = 'checkbox';
+            checkbox.style.marginRight = '5px';
+            checkbox.style.userSelect = 'none';
+            checkbox.checked = true;
+
+            switcher.prepend(checkbox);
+
+            switcher.onclick = () => {
+                if (typeof callback === 'function') {
+                    callback(checkbox.checked);
+                }
+            }
+
+            return switcher;
+
+        }
+
+        function buildLegend({ min, max, colorScale }) {
+
+            const div = document.createElement("div")
+
+            const step = (max - min) / 10
+            for (let index = 0; index <= 10; index++) {
+
+                const val = (min + step * index)
+
+                const container = document.createElement("div")
+                container.style.display = "flex"
+                container.style.flexDirection = "row"
+                container.style.gap = "5px"
+
+                const colorDiv = document.createElement("div")
+                colorDiv.style.display = "block"
+                colorDiv.style.width = "20px"
+                colorDiv.style.height = "20px"
+                const color = colorScale(val)
+                colorDiv.style.backgroundColor = color
+                const valueDiv = document.createElement("div")
+                valueDiv.innerHTML = val.toFixed(1)
+
+
+                container.appendChild(colorDiv)
+                container.appendChild(valueDiv)
+
+                div.appendChild(container)
+            }
+
+            document.getElementById("legend")?.remove()
+
+            const bottomDiv = document.createElement("div")
+            bottomDiv.id = "legend"
+            bottomDiv.style.position = "absolute"
+            bottomDiv.style.bottom = "30px"
+            bottomDiv.style.left = "10px"
+            bottomDiv.style.zIndex = 10
+            bottomDiv.style.backgroundColor = "white"
+            bottomDiv.style.padding = "10px"
+
+            bottomDiv.appendChild(div)
+            document.body.appendChild(bottomDiv)
+
+            return bottomDiv
+        }
+
+        function cosDegrees(degrees) {
+            // Convert degrees to radians
+            var radians = degrees * (Math.PI / 180);
+            // Return the cosine of the angle in radians
+            return Math.cos(radians);
+        }
+
+    </script>
+
+</body>
+
+</html>

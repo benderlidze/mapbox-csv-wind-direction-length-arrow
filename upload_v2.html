@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8' />
+    <title>Mapbox GL with SVG Arrows</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css' rel='stylesheet' />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        #upload {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            top: 10px;
+            left: 10px;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000
+        }
+
+        #speed-container {
+            display: none;
+            flex-direction: row;
+        }
+
+        #bearing-adjustment-container {
+            display: flex;
+            flex-direction: column;
+            margin-top: 5px;
+        }
+
+        #bearing-label {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #bearing-value {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id='upload'>
+        <input type="file" id="file" name="file" accept=".csv" onchange="uploadData(this.files[0])">
+        <div id="speed-container">
+            <div for="maxspeed">&#10230;</div>
+            <div id="maxspeed"></div>
+        </div>
+        <div id="bearing-adjustment-container">
+            <div id="bearing-label">
+                <span>Bearing Adjustment:</span>
+                <span id="bearing-value">0°</span>
+            </div>
+            <input type="range" id="bearing-slider" min="-180" max="180" value="0">
+        </div>
+    </div>
+    <div id='map'></div>
+
+    <script>
+
+        const speedContainer = document.getElementById('speed-container');
+        const maxspeed = document.getElementById('maxspeed');
+        const bearingSlider = document.getElementById('bearing-slider');
+        const bearingValue = document.getElementById('bearing-value');
+        let bearingAdjustment = 0;
+        let csvFileData = null;
+
+        // Update bearing value display and recalculate arrows when slider changes
+        bearingSlider.addEventListener('input', function () {
+            bearingAdjustment = parseInt(this.value);
+            bearingValue.textContent = bearingAdjustment + '°';
+            if (csvFileData) {
+                buildArraows(csvFileData);
+            }
+        });
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoidGhlZmxvd25vZGVyIiwiYSI6ImNsZm4xYmljZjBjcGMzeW5wczZjamN4ZTMifQ.19gBzrpz8b1Hb3i7z8rHAA';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: { lng: -122.08967380832354, lat: 37.37519303900049 },
+            zoom: 17
+        });
+
+        function calculateEndPoint(startLat, startLng, direction, length) {
+            // Adjust the direction by 180 degrees to get the opposite direction
+            var adjustedDirection = (direction + 180) % 360;
+
+            // Convert direction from degrees to radians
+            var directionRad = adjustedDirection * Math.PI / 180;
+
+            // Earth radius in meters (assuming a spherical Earth)
+            var earthRadius = 6371000; // Approximate radius of the Earth
+
+            // Calculate ending point coordinates
+            var endLat = Math.asin(Math.sin(startLat * Math.PI / 180) * Math.cos(length / earthRadius) +
+                Math.cos(startLat * Math.PI / 180) * Math.sin(length / earthRadius) * Math.cos(directionRad));
+            var endLng = (startLng * Math.PI / 180) + Math.atan2(Math.sin(directionRad) * Math.sin(length / earthRadius) * Math.cos(startLat * Math.PI / 180),
+                Math.cos(length / earthRadius) - Math.sin(startLat * Math.PI / 180) * Math.sin(endLat));
+
+            // Convert back to degrees
+            endLat = endLat * 180 / Math.PI;
+            endLng = endLng * 180 / Math.PI;
+
+            // Return the end point coordinates
+            return {
+                latitude: endLat,
+                longitude: endLng
+            };
+        }
+
+
+        map.on('load', function () {
+
+            new mapboxgl.Marker()
+                .setLngLat([-122.0908820866068, 37.37642408394201])
+                .addTo(map);
+
+            map.loadImage('triangle.png', function (error, image) {
+                if (error) throw error;
+                map.addImage('arrow', image);
+            });
+
+            //source for lines
+            map.addSource('lines', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: []
+                }
+            });
+            //add lines
+            map.addLayer({
+                id: 'lines',
+                type: 'line',
+                source: 'lines',
+                layout: {
+                    'line-cap': 'round',
+                    'line-join': 'round'
+                },
+                paint: {
+                    'line-color': 'red',
+                    'line-width': 4
+                }
+            });
+            //add red arrows
+            map.addLayer({
+                id: 'points',
+                type: 'symbol',
+                source: 'lines',
+                layout: {
+                    'icon-image': 'arrow',
+                    'icon-rotate': ['get', 'direction'],
+                    'icon-size': 0.02,
+                    'icon-allow-overlap': true
+                }
+            });
+
+            map.addSource('points', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: []
+                }
+            });
+
+            //add points
+            map.addLayer({
+                id: 'points2',
+                type: 'circle',
+                source: 'points',
+                paint: {
+                    'circle-radius': 5,
+                    'circle-color': 'blue',
+                    'circle-opacity': 0.5
+                }
+            });
+
+            //add id numbers
+            map.addLayer({
+                id: 'text',
+                type: 'symbol',
+                source: 'points',
+                layout: {
+                    'text-field': ['get', 'index'],
+                    'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+                    'text-radial-offset': 0.5,
+                    'text-justify': 'auto',
+                    'text-size': 12
+                }
+            });
+        });
+
+        function uploadData(file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const csvData = event.target.result;
+                csvFileData = csvData; // Store the CSV data for later use
+                buildArraows(csvData);
+            };
+            reader.readAsText(file);
+        }
+
+        function buildArraows(file) {
+            // Parse CSV file data using d3.csvParse
+            const data = d3.csvParse(file);
+
+            // Create a new Mapbox bounds object to keep track of the bounds of the points
+            const bounds = new mapboxgl.LngLatBounds();
+
+            // Show the speed container and display the maximum speed from the data
+            speedContainer.style.display = 'flex';
+            maxspeed.innerHTML = Math.max(...data.map((d) => +d.speed)) + ' m/s';
+
+            // Initialize an empty array to hold the lines
+            const lines = [];
+
+            // Loop through each data point in the CSV data
+            for (var i = 0; i < data.length; i++) {
+                // Break the loop if it's the last data point
+                if (i === data.length - 1) {
+                    break;
+                }
+
+                // Extract start and end latitude and longitude
+                const startLat = +data[i].latitude;
+                const startLng = +data[i].longitude;
+                const endLat = +data[i + 1].latitude;
+                const endLng = +data[i + 1].longitude;
+
+                // Calculate the bearing between the start and end points using Turf.js
+                const bearing = turf.bearing(turf.point([startLng, startLat]), turf.point([endLng, endLat]));
+
+                // Calculate the angle for the direction of the arrow, now including bearing adjustment
+                const angle = 180 - parseInt(data[i].direction) + bearingAdjustment;
+                console.log('180 - parseInt(data[i].direction)', 180 - parseInt(data[i].direction));
+
+                // Calculate the end point of the arrow based on speed and a
+                // ngle
+                const endPoint = calculateEndPoint(startLat, startLng, angle, +data[i].speed * 10);
+
+                // Extend the bounds to include the start and end points
+                bounds.extend([startLng, startLat]);
+                bounds.extend([endPoint.longitude, endPoint.latitude]);
+
+                // Add the line as a GeoJSON feature to the lines array
+                lines.push({
+                    type: 'Feature',
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: [
+                            [endPoint.longitude, endPoint.latitude],
+                            [startLng, startLat],
+                        ]
+                    },
+                    properties: {
+                        speed: +data[i].speed,
+                        direction: angle
+                    }
+                });
+            }
+
+            // Create an array of pin features for each data point
+            const pins = data.map((d) => {
+                return {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [d.longitude, d.latitude]
+                    },
+                    properties: {
+                        title: d.speed,
+                        description: d.direction,
+                        index: d.index
+                    }
+                };
+            });
+
+            // Fit the map to the bounds of the points
+            // map.fitBounds(bounds, {
+            //     padding: 100
+            // });
+
+            // Update the data source for the points on the map
+            map.getSource('points').setData({
+                type: 'FeatureCollection',
+                features: pins
+            });
+
+            // Update the data source for the lines on the map
+            map.getSource('lines').setData({
+                type: 'FeatureCollection',
+                features: lines
+            });
+
+        }
+
+
+
+
+
+    </script>
+
+</body>
+
+</html>
