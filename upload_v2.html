@@ -133,10 +133,6 @@
 
         map.on('load', function () {
 
-            new mapboxgl.Marker()
-                .setLngLat([-122.0908820866068, 37.37642408394201])
-                .addTo(map);
-
             map.loadImage('triangle.png', function (error, image) {
                 if (error) throw error;
                 map.addImage('arrow', image);
@@ -164,6 +160,30 @@
                     'line-width': 4
                 }
             });
+
+            //source for lines
+            map.addSource('lines2', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: []
+                }
+            });
+            //add lines
+            map.addLayer({
+                id: 'lines2',
+                type: 'line',
+                source: 'lines2',
+                layout: {
+                    'line-cap': 'round',
+                    'line-join': 'round'
+                },
+                paint: {
+                    'line-color': 'blue',
+                    'line-width': 2
+                }
+            });
+
             //add red arrows
             map.addLayer({
                 id: 'points',
@@ -174,6 +194,18 @@
                     'icon-rotate': ['get', 'direction'],
                     'icon-size': 0.02,
                     'icon-allow-overlap': true
+                }
+            });
+
+
+            map.addLayer({
+                id: 'points-text',
+                type: 'symbol',
+                source: 'lines',
+                layout: {
+                    'text-field': ['get', 'text'],
+                    'text-justify': 'auto',
+                    'text-size': 12
                 }
             });
 
@@ -235,6 +267,7 @@
 
             // Initialize an empty array to hold the lines
             const lines = [];
+            const lines2 = []
 
             // Loop through each data point in the CSV data
             for (var i = 0; i < data.length; i++) {
@@ -251,18 +284,15 @@
 
                 // Calculate the bearing between the start and end points using Turf.js
                 const bearing = turf.bearing(turf.point([startLng, startLat]), turf.point([endLng, endLat]));
+                // Calculate the angle for the direction of the arrow
+                const angle = 180 - parseInt(data[i].direction) + bearing;
+                const angleNoBearing = 180 - parseInt(data[i].direction)
 
-                // Calculate the angle for the direction of the arrow, now including bearing adjustment
-                const angle = 180 - parseInt(data[i].direction) + bearingAdjustment;
-                console.log('180 - parseInt(data[i].direction)', 180 - parseInt(data[i].direction));
 
                 // Calculate the end point of the arrow based on speed and a
                 // ngle
                 const endPoint = calculateEndPoint(startLat, startLng, angle, +data[i].speed * 10);
-
-                // Extend the bounds to include the start and end points
-                bounds.extend([startLng, startLat]);
-                bounds.extend([endPoint.longitude, endPoint.latitude]);
+                const endPoint2 = calculateEndPoint(startLat, startLng, angleNoBearing, +data[i].speed * 10);
 
                 // Add the line as a GeoJSON feature to the lines array
                 lines.push({
@@ -276,7 +306,27 @@
                     },
                     properties: {
                         speed: +data[i].speed,
-                        direction: angle
+                        direction: angle,
+                        directionOnly: data[i].direction,
+                        text: `Angle: ${angle}°, degrees: ${data[i].direction}`,
+                    }
+                });
+
+                // Add the line as a GeoJSON feature to the lines array
+                lines2.push({
+                    type: 'Feature',
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: [
+                            [endPoint2.longitude, endPoint2.latitude],
+                            [startLng, startLat],
+                        ]
+                    },
+                    properties: {
+                        speed: +data[i].speed,
+                        direction: angle,
+                        directionOnly: data[i].direction,
+                        text: `Angle: ${angle}°, degrees: ${data[i].direction}`,
                     }
                 });
             }
@@ -292,7 +342,7 @@
                     properties: {
                         title: d.speed,
                         description: d.direction,
-                        index: d.index
+                        index: d.index ?? 0
                     }
                 };
             });
@@ -312,6 +362,11 @@
             map.getSource('lines').setData({
                 type: 'FeatureCollection',
                 features: lines
+            });
+
+            map.getSource('lines2').setData({
+                type: 'FeatureCollection',
+                features: lines2
             });
 
         }
