@@ -304,7 +304,7 @@
                 // Calculate the bearing between the start and end points using Turf.js
                 const bearing = turf.bearing(turf.point([startLng, startLat]), turf.point([endLng, endLat]));
                 // Calculate the angle for the direction of the arrow
-                const angle = 360 + parseInt(data[i].direction) + bearingAdjustment;
+                const angle = parseInt(data[i].direction) + bearingAdjustment;
                 const angleNoBearing = 180 - parseInt(data[i].direction)
 
 
