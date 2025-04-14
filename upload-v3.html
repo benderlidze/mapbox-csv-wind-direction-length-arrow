@@ -65,6 +65,12 @@
         <div id="speed-container">
             <div for="maxspeed">&#10230;</div>
             <div id="maxspeed"></div>
+
+        </div>
+        <div>
+            <input type="checkbox" id="annotations" name="annotations" value="annotations" checked>
+            <label for="annotations">Index/angles:</label>
+
         </div>
         <div id="bearing-adjustment-container">
             <div id="bearing-label">
@@ -75,13 +81,13 @@
         </div>
     </div>
     <div id='map'></div>
-
     <script>
 
         const speedContainer = document.getElementById('speed-container');
         const maxspeed = document.getElementById('maxspeed');
         const bearingSlider = document.getElementById('bearing-slider');
         const bearingValue = document.getElementById('bearing-value');
+        const annotations = document.getElementById('annotations');
         let bearingAdjustment = 0;
         let csvFileData = null;
 
@@ -243,6 +249,16 @@
                     'text-radial-offset': 0.5,
                     'text-justify': 'auto',
                     'text-size': 12
+                }
+            });
+
+            annotations.addEventListener('change', function () {
+                if (this.checked) {
+                    map.setLayoutProperty('text', 'visibility', 'visible');
+                    map.setLayoutProperty('points-text', 'visibility', 'visible');
+                } else {
+                    map.setLayoutProperty('text', 'visibility', 'none');
+                    map.setLayoutProperty('points-text', 'visibility', 'none');
                 }
             });
         });
